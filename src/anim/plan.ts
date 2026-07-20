@@ -76,6 +76,27 @@ export const SOGLIA_USCITA = 'bottom bottom';
 /** La classe dell'elemento che fa da bersaglio comune, uguale in editor ed export. */
 export const CLASSE_CORSA = 'corsa';
 
+/**
+ * Converte una frazione della corsa (0..1) nella soglia anime.js corrispondente.
+ *
+ * Non è una conversione diretta, e il motivo è geometrico. Le soglie si
+ * esprimono come punto del BERSAGLIO (l'elemento .corsa, alto `height` vh),
+ * mentre la frazione che l'utente sceglie è sulla corsa SCORRIBILE, che è alta
+ * `height - 100` vh — una finestra in meno, perché l'ultima schermata è già in
+ * vista quando lo scroll finisce.
+ *
+ * Il punto del bersaglio a frazione p incrocia il bordo alto del contenitore
+ * quando si è scrollato di p × altezzaBersaglio; volendo che ciò accada a
+ * f × corsaScorribile, si ottiene p = f × (1 − 100/height).
+ *
+ * Saltare questo fattore è l'errore che fa finire un'animazione "al 100%"
+ * prima della fine della pagina — con height 300vh sbaglierebbe di un terzo.
+ */
+export function soglia(frazione: number, altezzaVh: number): string {
+  const p = frazione * (1 - 100 / altezzaVh);
+  return `top ${(p * 100).toFixed(2)}%`;
+}
+
 export type Traccia = {
   layer: Layer;
   domId: string;

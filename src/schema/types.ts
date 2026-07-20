@@ -7,6 +7,8 @@
  * riferimenti a nodi DOM — gli asset stanno nell'asset-store e qui si citano per id.
  */
 
+import type { ChiaveProp } from '../anim/catalogo';
+
 export const SCHEMA_VERSION = 4 as const;
 
 /**
@@ -71,12 +73,22 @@ export type BaseLayer = {
   transform?: { x?: number; y?: number; rotate?: number; scale?: number };
 };
 
+/**
+ * Animazione di un piano su una porzione della corsa.
+ *
+ * La finestra è espressa in FRAZIONI della corsa (0..1), non nelle soglie di
+ * anime.js: lo stato resta dichiarativo e il generatore resta l'unico posto
+ * che conosce la sintassi di `enter`/`leave`. Serve anche a non legare il file
+ * salvato a un dettaglio di sintassi che potrebbe cambiare fra versioni.
+ */
 export type ScrollAnim = {
-  enter: ScrollThreshold;
-  leave: ScrollThreshold;
-  /** es. { translateY: [0, -200], opacity: [0, 1] } */
-  props: Record<string, [number, number]>;
-  ease?: string;
+  /** Dove comincia, in frazione della corsa. 0 = inizio pagina. */
+  inizio: number;
+  /** Dove finisce, in frazione della corsa. 1 = fine pagina. */
+  fine: number;
+  /** es. { opacity: [0, 1], rotate: [0, 12] } */
+  props: Partial<Record<ChiaveProp, [number, number]>>;
+  ease: string;
 };
 
 export type TextLayer = BaseLayer & {

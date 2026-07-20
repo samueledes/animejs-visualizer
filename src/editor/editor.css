@@ -514,6 +514,103 @@
   gap: 6px;
 }
 
+.separatore {
+  width: 100%;
+  height: 0;
+  margin: 4px 0;
+  border: none;
+  border-top: 1px solid var(--construction);
+}
+
+.azione--attiva {
+  border-color: var(--working);
+  color: var(--working);
+}
+
+.campo-colore {
+  width: 100%;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--construction-strong);
+  background: var(--mylar-sunken);
+  cursor: pointer;
+}
+
+/* ---------- Editor dell'animazione ---------- */
+
+.animazione {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-left: 2px solid var(--working);
+  background: var(--mylar-sunken);
+}
+
+.prop {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.prop__testa {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+}
+
+.prop__nome {
+  font-family: var(--face-draw);
+  font-size: var(--size-body);
+  color: var(--annotation-dim);
+}
+
+.prop--attiva .prop__nome {
+  color: var(--annotation);
+}
+
+.prop__valori {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding-left: 21px;
+}
+
+.valore {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.valore__et {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-micro);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation-faint);
+}
+
+/* I valori da→a sono quote: mono, allineate, cifre a larghezza fissa. */
+.valore__campo {
+  width: 100%;
+  min-width: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--construction-strong);
+  background: var(--mylar);
+  color: var(--annotation);
+  font-family: var(--face-data);
+  font-size: var(--size-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.valore__campo:focus-visible,
+.campo-colore:focus-visible {
+  outline: 2px solid var(--working);
+  outline-offset: 1px;
+}
+
 .nota {
   margin: 0;
   font-family: var(--face-draw);

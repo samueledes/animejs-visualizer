@@ -3,8 +3,11 @@ import {
   createEmptyProject,
   type Layer,
   type ProjectState,
+  type ScrollAnim,
+  type ScrollSync,
   type TextLayer,
 } from '../schema/types';
+import type { ChiaveProp } from '../anim/catalogo';
 
 /**
  * Lo store tiene DUE cose separate, e la separazione è deliberata:
@@ -117,6 +120,23 @@ type EditorStore = {
   updateLayer: (id: string, patch: Partial<Layer>) => void;
   /** Sposta un layer di un gradino in profondità. Cambia z, non l'ordine in lista. */
   nudgeDepth: (id: string, delta: 1 | -1) => void;
+
+  /** Accende o spegne l'animazione sullo scroll di un piano. */
+  toggleScrollAnim: (id: string) => void;
+  aggiornaScrollAnim: (id: string, patch: Partial<ScrollAnim>) => void;
+  /** Accende, spegne o modifica una singola proprietà animata. */
+  setProp: (id: string, chiave: ChiaveProp, coppia: [number, number] | null) => void;
+
+  setAltezzaCorsa: (vh: number) => void;
+  setSync: (sync: ScrollSync) => void;
+  setSfondo: (colore: string) => void;
+};
+
+const ANIM_PREDEFINITA: ScrollAnim = {
+  inizio: 0.1,
+  fine: 0.6,
+  props: { opacity: [0, 1] },
+  ease: 'outExpo',
 };
 
 export const useEditor = create<EditorStore>((set) => ({
@@ -161,6 +181,43 @@ export const useEditor = create<EditorStore>((set) => ({
       },
     })),
 
+  toggleScrollAnim: (id) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        layers: s.project.layers.map((l) =>
+          l.id === id
+            ? { ...l, scrollAnim: l.scrollAnim ? undefined : { ...ANIM_PREDEFINITA } }
+            : l,
+        ),
+      },
+    })),
+
+  aggiornaScrollAnim: (id, patch) => set((s) => conAnim(s, id, (a) => ({ ...a, ...patch }))),
+
+  setProp: (id, chiave, coppia) =>
+    set((s) =>
+      conAnim(s, id, (a) => {
+        const props = { ...a.props };
+        if (coppia === null) delete props[chiave];
+        else props[chiave] = coppia;
+        return { ...a, props };
+      }),
+    ),
+
+  setAltezzaCorsa: (vh) =>
+    set((s) => ({
+      // Sotto 101vh non resterebbe niente da scorrere e ogni animazione
+      // sarebbe già finita al caricamento.
+      project: { ...s.project, scroll: { ...s.project.scroll, height: Math.max(101, vh) } },
+    })),
+
+  setSync: (sync) =>
+    set((s) => ({ project: { ...s.project, scroll: { ...s.project.scroll, sync } } })),
+
+  setSfondo: (colore) =>
+    set((s) => ({ project: { ...s.project, canvas: { ...s.project.canvas, background: colore } } })),
+
   nudgeDepth: (id, delta) =>
     set((s) => {
       const layers = s.project.layers;
@@ -181,6 +238,22 @@ export const useEditor = create<EditorStore>((set) => ({
       };
     }),
 }));
+
+/** Applica una modifica al solo scrollAnim di un piano, se ce l'ha. */
+function conAnim(
+  s: { project: ProjectState },
+  id: string,
+  f: (a: ScrollAnim) => ScrollAnim,
+): { project: ProjectState } {
+  return {
+    project: {
+      ...s.project,
+      layers: s.project.layers.map((l) =>
+        l.id === id && l.scrollAnim ? { ...l, scrollAnim: f(l.scrollAnim) } : l,
+      ),
+    },
+  };
+}
 
 /** I layer ordinati dal piano più lontano al più vicino. */
 export const byDepth = (layers: Layer[]) => [...layers].sort((a, b) => a.z - b.z);

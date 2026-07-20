@@ -3,6 +3,7 @@ import {
   SOGLIA_ENTRATA,
   SOGLIA_USCITA,
   corsaVh,
+  soglia,
   spostamentoVh,
   syncSource,
   tracce,
@@ -142,7 +143,7 @@ export function stateToJs(state: ProjectState): string {
               ? `va in senso opposto allo scroll`
               : `percorre il ${(drift * 100).toFixed(0)}% della corsa`;
 
-      return `// ${layer.name} — velocità ${drift}× (${commento})
+      const parallax = `// ${layer.name} — velocità ${drift}× (${commento})
 animate('#${domId}', {
   translateY: [0, '${arrivo}'],
   ease: '${ease}',
@@ -153,6 +154,32 @@ animate('#${domId}', {
     sync: ${sync},
   }),
 });`;
+
+      const a = layer.scrollAnim;
+      const voci = a ? Object.entries(a.props) : [];
+      if (!a || voci.length === 0) return parallax;
+
+      const righeProps = voci
+        .map(([k, v]) => `  ${k}: [${v[0]}, ${v[1]}],`)
+        .join('\n');
+
+      // Animazione separata dal parallax: usa una finestra di scroll più
+      // stretta, quindi non può stare nella stessa chiamata. Le proprietà non
+      // si sovrappongono (translateY è solo del parallax), perciò anime.js le
+      // compone senza conflitti.
+      const anim = `// ${layer.name} — animazione fra il ${(a.inizio * 100).toFixed(0)}% e il ${(a.fine * 100).toFixed(0)}% della corsa
+animate('#${domId}', {
+${righeProps}
+  ease: '${a.ease}',
+  autoplay: onScroll({
+    target: corsa,
+    enter: '${soglia(a.inizio, state.scroll.height)}',
+    leave: '${soglia(a.fine, state.scroll.height)}',
+    sync: ${sync},
+  }),
+});`;
+
+      return `${parallax}\n\n${anim}`;
     })
     .join('\n\n');
 
