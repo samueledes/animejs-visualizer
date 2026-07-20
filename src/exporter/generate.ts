@@ -38,8 +38,20 @@ function nomeFile(state: ProjectState): string {
  */
 export type RisolviAsset = (id: string) => string | null;
 
+/**
+ * I piani che il generatore sa emettere.
+ *
+ * I piani modello sono esclusi finché l'export 3D non esiste (HANDOFF §8), e
+ * sono esclusi da ENTRAMBI i consumatori di proposito: mettere un segnaposto
+ * nell'anteprima e niente nello ZIP le farebbe raccontare cose diverse. Che il
+ * piano non sia ancora esportabile lo dice l'editor, non l'artefatto generato.
+ */
+function pianiEmettibili(state: ProjectState) {
+  return tracce(state).filter((t) => t.layer.type !== 'model');
+}
+
 function pianiMarkup(state: ProjectState, risolvi: RisolviAsset): string {
-  return tracce(state)
+  return pianiEmettibili(state)
     .map(({ layer, domId }) => {
       let corpo = '';
       if (layer.type === 'text') {
@@ -83,7 +95,7 @@ ${piani}
 }
 
 export function stateToCss(state: ProjectState): string {
-  const regole = tracce(state)
+  const regole = pianiEmettibili(state)
     .map(({ layer, domId }) => {
       const t = layer.transform ?? {};
       const righe: string[] = [`  z-index: ${layer.z};`];
@@ -156,7 +168,7 @@ export function stateToJs(state: ProjectState): string {
   const vh = corsaVh(state);
   const sync = syncSource(state.scroll.sync);
 
-  const blocchi = tracce(state)
+  const blocchi = pianiEmettibili(state)
     .map(({ layer, domId, drift, ease }) => {
       const arrivo = spostamentoVh(drift, vh);
       const commento =

@@ -17,6 +17,7 @@ export function TitleBlock() {
   const state = useEditor((s) => s.project);
   const caricaProgetto = useEditor((s) => s.caricaProgetto);
   const addImage = useEditor((s) => s.addImage);
+  const addModel = useEditor((s) => s.addModel);
   const assets = useAssets((s) => s.assets);
   const aggiungiAsset = useAssets((s) => s.aggiungi);
   const sostituisciAssets = useAssets((s) => s.aggiungiDaBlob);
@@ -25,6 +26,7 @@ export function TitleBlock() {
   const [esito, setEsito] = useState<string | null>(null);
   const inputProgetto = useRef<HTMLInputElement>(null);
   const inputImmagine = useRef<HTMLInputElement>(null);
+  const inputModello = useRef<HTMLInputElement>(null);
 
   const esclusi = layerNonSupportati(state);
 
@@ -76,6 +78,12 @@ export function TitleBlock() {
     setEsito(`Immagine aggiunta: ${file.name}`);
   }
 
+  async function importaModello(file: File) {
+    const asset = await aggiungiAsset(file, 'model');
+    addModel(asset.id, file.name.replace(/\.[^.]+$/, ''));
+    setEsito(`Modello aggiunto: ${file.name} — non finisce ancora nell'export`);
+  }
+
   const sync =
     state.scroll.sync.mode === 'smooth'
       ? `smooth ${state.scroll.sync.amount.toFixed(2)}`
@@ -97,6 +105,9 @@ export function TitleBlock() {
 
         <button type="button" className="azione" onClick={() => inputImmagine.current?.click()}>
           Immagine
+        </button>
+        <button type="button" className="azione" onClick={() => inputModello.current?.click()}>
+          Modello
         </button>
         <button type="button" className="azione" onClick={() => inputProgetto.current?.click()}>
           Apri
@@ -135,6 +146,17 @@ export function TitleBlock() {
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) void importaImmagine(f);
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={inputModello}
+        className="nascosto"
+        type="file"
+        accept=".glb,.gltf,model/gltf-binary"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) void importaModello(f);
           e.target.value = '';
         }}
       />

@@ -3,6 +3,7 @@ import {
   createEmptyProject,
   type ImageLayer,
   type Layer,
+  type ModelLayer,
   type ProjectState,
   type ScrollAnim,
   type ScrollSync,
@@ -119,6 +120,8 @@ type EditorStore = {
   addText: () => void;
   /** Crea un piano immagine che cita un asset già presente nel deposito. */
   addImage: (assetId: string, nome: string) => void;
+  /** Crea un piano modello che cita un .glb già presente nel deposito. */
+  addModel: (assetId: string, nome: string) => void;
   /** Sostituisce l'intero progetto. Gli asset li rimpiazza il deposito. */
   caricaProgetto: (progetto: ProjectState) => void;
   removeLayer: (id: string) => void;
@@ -165,6 +168,26 @@ export const useEditor = create<EditorStore>((set) => ({
         parallax: { speedY: 0.4 },
         src: assetId,
         transform: { x: 0, y: 0 },
+      };
+      return {
+        project: { ...s.project, layers: [...s.project.layers, layer] },
+        selectedId: layer.id,
+      };
+    }),
+
+  addModel: (assetId, nome) =>
+    set((s) => {
+      const z = s.project.layers.reduce((max, l) => Math.max(max, l.z), -1) + 1;
+      const layer: ModelLayer = {
+        id: nextId('mdl'),
+        name: nome,
+        type: 'model',
+        z,
+        // Un modello 3D non fa parallax come un piano piatto: la scena resta
+        // ferma e a muoversi sono camera e pezzi. Parte a zero.
+        parallax: { speedY: 0 },
+        src: assetId,
+        camera: { fov: 45, position: [0, 0, 6] },
       };
       return {
         project: { ...s.project, layers: [...s.project.layers, layer] },

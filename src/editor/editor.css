@@ -518,6 +518,59 @@
   display: none;
 }
 
+/* ---------- Modo autore 3D ---------- */
+
+/* La striscia dice sempre se stai guardando l'anteprima o stai autorando.
+   Due rendering che si somigliano senza dire chi sono erano il problema che
+   l'anteprima in iframe ha risolto: qui la distinzione resta esplicita. */
+.modo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  background: var(--mylar-raised);
+  border-bottom: 1px solid var(--working);
+}
+
+.modo__nome {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--working);
+}
+
+.modo__nota {
+  font-family: var(--face-data);
+  font-size: var(--size-micro);
+  color: var(--annotation-dim);
+}
+
+.modo__esci {
+  margin-left: auto;
+  padding: 4px 8px;
+  border: 1px solid var(--construction-strong);
+  background: transparent;
+  color: var(--annotation);
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-micro);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.modo__esci:hover {
+  border-color: var(--working);
+  color: var(--working);
+}
+
+/* Il canvas prende quello che resta sotto la striscia. */
+.tavola__foglio:has(.modo) .scena3d {
+  height: calc(100% - 33px) !important;
+}
+
 .separatore {
   width: 100%;
   height: 0;
