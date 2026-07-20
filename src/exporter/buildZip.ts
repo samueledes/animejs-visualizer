@@ -33,8 +33,14 @@ async function libreriePer3d(): Promise<Array<[string, string]>> {
     );
   }
   const file: string[] = await risposta.json();
+  // Il manifesto non serve nell'archivio. Il bundle nemmeno, ed è la
+  // riga che conta: sta in /lib per servire l'export 2D, ma spedirlo accanto
+  // all'albero modulare metterebbe due copie del motore nello stesso ZIP.
+  // Nessuna riga lo importerebbe, ma è peso morto e smentisce l'invariante
+  // per chi apre l'archivio e legge (HANDOFF §8).
+  const esclusi = new Set(['manifesto.json', 'anime.esm.min.js']);
   return Promise.all(
-    file.map(async (f) => {
+    file.filter((f) => !esclusi.has(f)).map(async (f) => {
       const r = await fetch(`/lib/${f}`);
       if (!r.ok) throw new Error(`manca /lib/${f}`);
       return [f, await r.text()] as [string, string];
@@ -59,9 +65,7 @@ export async function buildZip(state: ProjectState, assets: Record<string, Asset
     // Con dei modelli si spedisce l'albero modulare, MAI insieme al bundle:
     // due copie del motore significano due registry disgiunti e l'adapter che
     // si registra in quello sbagliato — HANDOFF §8.
-    for (const [percorso, contenuto] of await libreriePer3d()) {
-      if (percorso !== 'manifesto.json') lib.file(percorso, contenuto);
-    }
+    for (const [percorso, contenuto] of await libreriePer3d()) lib.file(percorso, contenuto);
   } else {
     lib.file('anime.esm.min.js', animeSource);
   }
