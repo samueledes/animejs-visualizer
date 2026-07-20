@@ -4,7 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "prepara-lib": "node scripts/prepara-lib.mjs",
+    "predev": "npm run prepara-lib",
     "dev": "vite",
+    "prebuild": "npm run prepara-lib",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview"

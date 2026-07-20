@@ -1,8 +1,4 @@
 import { useEffect, useMemo, useRef } from 'react';
-// URL reale servito dall'app, non un blob: un iframe `srcdoc` non riesce a
-// importare un blob creato dalla pagina madre (ERR_FILE_NOT_FOUND), mentre un
-// URL di pari origine sì. Vite lo emette come asset sia in dev sia in build.
-import urlAnimeAsset from '../../node_modules/animejs/dist/bundles/anime.esm.min.js?url';
 import { stateToDocumentoUnico } from '../exporter/generate';
 import { useAssets } from '../assets-store/store';
 import { useEditor } from '../store/project';
@@ -26,16 +22,13 @@ export function PreviewFrame({ state }: { state: ProjectState }) {
   const setScroller = useEditor((s) => s.setScroller);
   const setScrollPos = useEditor((s) => s.setScrollPos);
 
-  // Assoluto: dentro l'iframe un percorso relativo si risolverebbe rispetto al
-  // documento srcdoc, che non ha una base utile.
-  const urlAnime = useMemo(() => new URL(urlAnimeAsset, location.origin).href, []);
-
   // Nell'anteprima un asset si raggiunge col suo object URL; nello ZIP con un
-  // percorso relativo. È l'unica differenza fra i due documenti generati.
+  // percorso relativo. È l'unica differenza fra i due documenti generati,
+  // insieme a dove stanno le librerie (/lib qui, ./lib nello ZIP).
   const assets = useAssets((s) => s.assets);
   const documento = useMemo(
-    () => stateToDocumentoUnico(state, urlAnime, (id) => assets[id]?.url ?? null),
-    [state, urlAnime, assets],
+    () => stateToDocumentoUnico(state, (id) => assets[id]?.url ?? null),
+    [state, assets],
   );
 
   useEffect(() => {

@@ -180,6 +180,8 @@ function ProprietaPiano({ id }: { id: string }) {
         </>
       )}
 
+      {layer.type === 'model' && <EditorRotazione id={layer.id} />}
+
       <hr className="separatore" />
 
       <button
@@ -198,6 +200,63 @@ function ProprietaPiano({ id }: { id: string }) {
         Togli dalla tavola
       </button>
     </>
+  );
+}
+
+/* ---------------------------------------------------------------- rotazione */
+
+/**
+ * Rotazione sullo scroll di un modello.
+ *
+ * I gradi restano gradi: l'adapter Three di anime.js converte lui in radianti.
+ * Mostrarli in radianti qui sarebbe far trapelare un dettaglio della libreria.
+ */
+function EditorRotazione({ id }: { id: string }) {
+  const layer = useEditor((s) => s.project.layers.find((l) => l.id === id));
+  const aggiornaSpin = useEditor((s) => s.aggiornaSpin);
+  const spin = layer?.type === 'model' ? layer.spin : undefined;
+  if (!spin) return null;
+
+  return (
+    <div className="animazione">
+      <Quota etichetta="Rotazione" valore={`${spin.to - spin.from}`} unita="°" />
+      <input
+        className="cursore"
+        type="range"
+        min={-720}
+        max={720}
+        step={15}
+        value={spin.to}
+        onChange={(e) => aggiornaSpin(id, { to: +e.target.value })}
+        aria-label="Gradi di rotazione sulla corsa"
+      />
+
+      <div className="quota-riga">
+        <label className="quota-riga__et" htmlFor={`asse-${id}`}>
+          Asse
+        </label>
+      </div>
+      <select
+        id={`asse-${id}`}
+        className="campo-testo"
+        value={spin.axis}
+        onChange={(e) => aggiornaSpin(id, { axis: e.target.value as 'x' | 'y' | 'z' })}
+      >
+        <option value="y">Y — gira come una trottola</option>
+        <option value="x">X — si ribalta in avanti</option>
+        <option value="z">Z — rolla di lato</option>
+      </select>
+
+      <SceltaEase
+        id={`ease-spin-${id}`}
+        valore={spin.ease}
+        onChange={(ease) => aggiornaSpin(id, { ease })}
+      />
+      <p className="nota">
+        Il modello non compare nel modo autore: lì si compone il pezzo. Per vederlo ruotare
+        torna all'anteprima e scorri.
+      </p>
+    </div>
   );
 }
 

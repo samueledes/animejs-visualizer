@@ -135,6 +135,9 @@ type EditorStore = {
   /** Accende, spegne o modifica una singola proprietà animata. */
   setProp: (id: string, chiave: ChiaveProp, coppia: [number, number] | null) => void;
 
+  /** Modifica la rotazione sullo scroll di un piano modello. */
+  aggiornaSpin: (id: string, patch: Partial<NonNullable<ModelLayer['spin']>>) => void;
+
   setAltezzaCorsa: (vh: number) => void;
   setSync: (sync: ScrollSync) => void;
   setSfondo: (colore: string) => void;
@@ -188,6 +191,10 @@ export const useEditor = create<EditorStore>((set) => ({
         parallax: { speedY: 0 },
         src: assetId,
         camera: { fov: 45, position: [0, 0, 6] },
+        // Un giro completo sull'asse Y lungo tutta la corsa: è la cosa più
+        // semplice guidata dallo scroll (§6) e fa sì che un modello appena
+        // importato mostri subito di essere agganciato allo scroll.
+        spin: { axis: 'y', from: 0, to: 360, inizio: 0, fine: 1, ease: 'linear' },
       };
       return {
         project: { ...s.project, layers: [...s.project.layers, layer] },
@@ -252,6 +259,18 @@ export const useEditor = create<EditorStore>((set) => ({
         return { ...a, props };
       }),
     ),
+
+  aggiornaSpin: (id, patch) =>
+    set((s) => ({
+      project: {
+        ...s.project,
+        layers: s.project.layers.map((l) =>
+          l.id === id && l.type === 'model' && l.spin
+            ? { ...l, spin: { ...l.spin, ...patch } }
+            : l,
+        ),
+      },
+    })),
 
   setAltezzaCorsa: (vh) =>
     set((s) => ({

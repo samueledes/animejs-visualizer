@@ -128,16 +128,22 @@ export type ModelLayer = BaseLayer & {
    */
   explode?: {
     offsets: Record<string, [number, number, number]>; // meshName → offset
-    enter: ScrollThreshold;
-    leave: ScrollThreshold;
+    /** Finestra in frazioni della corsa, come ScrollAnim. */
+    inizio: number;
+    fine: number;
   };
   spin?: {
     axis: 'x' | 'y' | 'z';
-    /** In GRADI: l'adapter Three di anime.js converte lui in radianti. */
+    /**
+     * In GRADI, non radianti: l'adapter Three di anime.js converte lui.
+     * Animando `mesh.rotation` senza adapter servirebbero i radianti — è una
+     * delle differenze fra le due strade, vedi HANDOFF §8.
+     */
     from: number;
     to: number;
-    enter: ScrollThreshold;
-    leave: ScrollThreshold;
+    inizio: number;
+    fine: number;
+    ease: string;
   };
 };
 

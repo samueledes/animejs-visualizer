@@ -8,7 +8,7 @@ import {
   syncSource,
   tracce,
 } from '../anim/plan';
-import type { Layer, ProjectState, TextLayer } from '../schema/types';
+import type { Layer, ModelLayer, ProjectState, TextLayer } from '../schema/types';
 
 /**
  * Da stato a codice.
@@ -50,6 +50,22 @@ function pianiEmettibili(state: ProjectState) {
   return tracce(state).filter((t) => t.layer.type !== 'model');
 }
 
+/** I piani modello: hanno un percorso di generazione tutto loro (scena Three). */
+export function pianiModello(state: ProjectState): ModelLayer[] {
+  return [...state.layers]
+    .sort((a, b) => a.z - b.z)
+    .filter((l): l is ModelLayer => l.type === 'model');
+}
+
+/**
+ * Dove stanno le librerie rispetto al documento generato.
+ *
+ * Nello ZIP è './lib' (file scritti accanto a index.html), nell'anteprima è
+ * '/lib' (serviti dall'app). È l'unica differenza fra i due documenti, insieme
+ * a come si raggiunge un asset.
+ */
+export type BaseLib = './lib' | '/lib';
+
 function pianiMarkup(state: ProjectState, risolvi: RisolviAsset): string {
   return pianiEmettibili(state)
     .map(({ layer, domId }) => {
@@ -69,7 +85,25 @@ function pianiMarkup(state: ProjectState, risolvi: RisolviAsset): string {
     .join('\n');
 }
 
-export function stateToHtml(state: ProjectState, risolvi: RisolviAsset): string {
+/**
+ * L'import map serve a una cosa sola ma indispensabile: l'adapter Three di
+ * anime.js e GLTFLoader importano `three` come specificatore nudo, che un
+ * browser non sa risolvere da solo. Senza, il modulo non carica affatto.
+ */
+function importMap(state: ProjectState, base: BaseLib): string {
+  if (pianiModello(state).length === 0) return '';
+  return `    <script type="importmap">
+      { "imports": { "three": "${base}/three.module.js" } }
+    </script>
+`;
+}
+
+/** Il contenitore del canvas, sotto ai piani 2D. */
+function contenitore3d(state: ProjectState): string {
+  return pianiModello(state).length > 0 ? '        <div class="scena3d"></div>\n' : '';
+}
+
+export function stateToHtml(state: ProjectState, risolvi: RisolviAsset, base: BaseLib): string {
   const piani = pianiMarkup(state, risolvi);
 
   return `<!doctype html>
@@ -79,13 +113,13 @@ export function stateToHtml(state: ProjectState, risolvi: RisolviAsset): string 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${esc(nomeFile(state))}</title>
     <link rel="stylesheet" href="./style.css" />
-  </head>
+${importMap(state, base)}  </head>
   <body>
     <!-- .corsa è alta più della finestra: è lo spazio da scorrere.
          .scena resta appiccicata in cima e mostra sempre la stessa finestra. -->
     <div class="corsa">
       <div class="scena">
-${piani}
+${contenitore3d(state)}${piani}
       </div>
     </div>
     <script type="module" src="./animation.js"></script>
@@ -150,6 +184,18 @@ body {
   height: auto;
 }
 
+/* Il canvas 3D sta sotto ai piani 2D e non intercetta i click. */
+.scena3d {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.scena3d canvas {
+  display: block;
+}
+
 .piano__mancante {
   font-family: ui-monospace, monospace;
   font-size: 14px;
@@ -164,9 +210,106 @@ ${regole}
 `;
 }
 
-export function stateToJs(state: ProjectState): string {
+/**
+ * La scena Three vanilla, generata solo se ci sono piani modello.
+ *
+ * anime.js pilota, Three disegna (HANDOFF §12). Anche il ciclo di rendering
+ * passa da anime: `createTimer({ onUpdate })` invece di setAnimationLoop.
+ *
+ * L'import dell'adapter è quello che rende animabile un oggetto Three con la
+ * stessa API di un elemento DOM. Va importato dall'ALBERO MODULARE: il bundle
+ * di anime.js non lo contiene, e mescolarli creerebbe due registry disgiunti
+ * con l'animazione che fallisce in silenzio (HANDOFF §8).
+ */
+function scenaTre(state: ProjectState, risolvi: RisolviAsset): string {
+  const modelli = pianiModello(state);
+  if (modelli.length === 0) return '';
+
+  const sync = syncSource(state.scroll.sync);
+
+  const carichi = modelli
+    .map((m) => {
+      const url = risolvi(m.src);
+      if (!url) return `// ${m.name}: file del modello mancante, saltato.`;
+
+      const s = m.spin;
+      const rotazione = s
+        ? `
+    // ${m.name} — ruota di ${s.to - s.from}° sull'asse ${s.axis} fra il ${(s.inizio * 100).toFixed(0)}% e il ${(s.fine * 100).toFixed(0)}% della corsa.
+    // I valori sono in GRADI: li converte l'adapter.
+    animate(modello, {
+      rotate${s.axis.toUpperCase()}: [${s.from}, ${s.to}],
+      ease: '${s.ease}',
+      autoplay: onScroll({
+        target: corsa,
+        enter: '${soglia(s.inizio, state.scroll.height)}',
+        leave: '${soglia(s.fine, state.scroll.height)}',
+        sync: ${sync},
+      }),
+    });`
+        : `
+    // ${m.name}: nessuna animazione impostata.`;
+
+      return `
+  loader.load('${url}', (gltf) => {
+    const modello = gltf.scene;
+    inquadra(modello);
+    scene.add(modello);
+${rotazione}
+  });`;
+    })
+    .join('\n');
+
+  const cam = modelli[0].camera ?? { fov: 45, position: [0, 0, 6] as [number, number, number] };
+
+  return `
+// ---------------------------------------------------------------- scena 3D
+const contenitore3d = document.querySelector('.scena3d');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(${cam.fov}, innerWidth / innerHeight, 0.1, 1000);
+camera.position.set(${cam.position.join(', ')});
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+contenitore3d.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const luce = new THREE.DirectionalLight(0xffffff, 1.2);
+luce.position.set(3, 5, 2);
+scene.add(luce);
+
+// Centra il modello nell'origine e lo porta a una dimensione prevedibile:
+// i .glb arrivano con scale e centri qualsiasi, e senza questo un modello
+// può nascere fuori inquadratura o grande come una stanza.
+function inquadra(oggetto) {
+  const scatola = new THREE.Box3().setFromObject(oggetto);
+  const dimensione = scatola.getSize(new THREE.Vector3());
+  const centro = scatola.getCenter(new THREE.Vector3());
+  const lato = Math.max(dimensione.x, dimensione.y, dimensione.z) || 1;
+  oggetto.scale.multiplyScalar(2 / lato);
+  oggetto.position.sub(centro.multiplyScalar(2 / lato));
+}
+
+const loader = new GLTFLoader();
+${carichi}
+
+// anime.js guida anche il ciclo di rendering: coerente con "anime pilota,
+// Three disegna". Un setAnimationLoop di Three girerebbe in parallelo.
+createTimer({ onUpdate: () => renderer.render(scene, camera) });
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+`;
+}
+
+export function stateToJs(state: ProjectState, base: BaseLib, risolvi: RisolviAsset): string {
   const vh = corsaVh(state);
   const sync = syncSource(state.scroll.sync);
+  const tre = scenaTre(state, risolvi);
 
   const blocchi = pianiEmettibili(state)
     .map(({ layer, domId, drift, ease }) => {
@@ -220,7 +363,16 @@ ${righeProps}
     })
     .join('\n\n');
 
-  return `import { animate, onScroll } from './lib/anime.esm.min.js';
+  // Con dei modelli servono l'albero modulare di anime, l'adapter, Three e il
+  // loader; senza, basta il bundle: più piccolo e con meno file nello ZIP.
+  const testata = tre
+    ? `import { animate, createTimer, onScroll } from '${base}/animejs/index.js';
+import '${base}/animejs/adapters/three/index.js';
+import * as THREE from 'three';
+import { GLTFLoader } from '${base}/loaders/GLTFLoader.js';`
+    : `import { animate, onScroll } from '${base}/anime.esm.min.js';`;
+
+  return `${testata}
 
 /**
  * Animazione parallax generata dall'editor.
@@ -242,7 +394,7 @@ ${righeProps}
 const corsa = document.querySelector('.${CLASSE_CORSA}');
 
 ${blocchi}
-`;
+${tre}`;
 }
 
 /**
@@ -254,28 +406,26 @@ ${blocchi}
  * divergere: sono lo stesso documento, con la sola differenza di dove sta il
  * bundle di anime.js.
  */
-export function stateToDocumentoUnico(
-  state: ProjectState,
-  urlAnime: string,
-  risolvi: RisolviAsset,
-): string {
-  const js = stateToJs(state).replace('./lib/anime.esm.min.js', urlAnime);
+export function stateToDocumentoUnico(state: ProjectState, risolvi: RisolviAsset): string {
+  // Le librerie stanno in /lib, servite dall'app; nello ZIP staranno in ./lib,
+  // accanto a index.html. È l'unica differenza, insieme agli URL degli asset.
+  const base: BaseLib = '/lib';
   return `<!doctype html>
 <html lang="it">
   <head>
     <meta charset="utf-8" />
-    <style>
+${importMap(state, base)}    <style>
 ${stateToCss(state)}
     </style>
   </head>
   <body>
     <div class="corsa">
       <div class="scena">
-${pianiMarkup(state, risolvi)}
+${contenitore3d(state)}${pianiMarkup(state, risolvi)}
       </div>
     </div>
     <script type="module">
-${js}
+${stateToJs(state, base, risolvi)}
     </script>
   </body>
 </html>`;
@@ -283,10 +433,11 @@ ${js}
 
 /** Tutte le sorgenti generate, per chi vuole ispezionarle senza aprire lo ZIP. */
 export function stateToSources(state: ProjectState, risolvi: RisolviAsset) {
+  const base: BaseLib = './lib';
   return {
-    'index.html': stateToHtml(state, risolvi),
+    'index.html': stateToHtml(state, risolvi, base),
     'style.css': stateToCss(state),
-    'animation.js': stateToJs(state),
+    'animation.js': stateToJs(state, base, risolvi),
   } satisfies Record<string, string>;
 }
 
