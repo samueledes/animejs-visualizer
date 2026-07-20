@@ -64,6 +64,26 @@
   display: flex;
   gap: 26px;
   margin: 0;
+  margin-left: auto;
+}
+
+.cartiglio__azioni {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 26px;
+}
+
+.cartiglio__esito {
+  font-family: var(--face-data);
+  font-size: var(--size-micro);
+  color: var(--annotation-dim);
+}
+
+.azione:disabled {
+  color: var(--annotation-faint);
+  border-color: var(--construction);
+  cursor: not-allowed;
 }
 
 .campo {
@@ -208,6 +228,15 @@
   box-shadow: 0 0 0 1px var(--construction), 0 18px 44px rgb(0 0 0 / 0.45);
 }
 
+/* L'anteprima è l'artefatto esportato: un documento a sé, quindi un iframe.
+   Lo scroll che anime.js osserva è quello della sua finestra. */
+.tavola__frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
 .tavola__vuota,
 .vuoto {
   margin: 0;
@@ -225,21 +254,6 @@
 
 .vuoto--stretto {
   font-size: var(--size-micro);
-}
-
-.piano-vp {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  font-family: var(--face-draw);
-  will-change: transform;
-}
-
-.piano-vp--sel .piano-vp__corpo {
-  outline: 1px dashed var(--working);
-  outline-offset: 8px;
 }
 
 /* ---------- Fascia inferiore ---------- */
@@ -522,8 +536,3 @@
   outline-offset: 1px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .piano-vp {
-    transition: none;
-  }
-}

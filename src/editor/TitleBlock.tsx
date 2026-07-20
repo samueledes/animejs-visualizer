@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { useEditor } from '../store/project';
+import { scaricaZip } from '../exporter/buildZip';
+import { layerNonSupportati } from '../exporter/generate';
 
 /**
  * Cartiglio. Nel disegno tecnico è il riquadro che identifica la tavola:
@@ -9,8 +12,26 @@ import { useEditor } from '../store/project';
  * è decorazione.
  */
 export function TitleBlock() {
-  const layers = useEditor((s) => s.project.layers);
-  const scroll = useEditor((s) => s.project.scroll);
+  const state = useEditor((s) => s.project);
+  const layers = state.layers;
+  const scroll = state.scroll;
+  const [esito, setEsito] = useState<string | null>(null);
+
+  const esclusi = layerNonSupportati(state);
+
+  async function esporta() {
+    setEsito('Preparo…');
+    try {
+      await scaricaZip(state);
+      setEsito(
+        esclusi.length > 0
+          ? `Esportato senza ${esclusi.length} piano/i non ancora supportati`
+          : 'Esportato',
+      );
+    } catch (e) {
+      setEsito(`Export non riuscito: ${e instanceof Error ? e.message : 'errore'}`);
+    }
+  }
 
   const sync =
     scroll.sync.mode === 'smooth'
@@ -27,6 +48,12 @@ export function TitleBlock() {
         <Campo etichetta="Corsa" valore={`${scroll.height}vh`} />
         <Campo etichetta="Aggancio" valore={sync} />
       </dl>
+      <div className="cartiglio__azioni">
+        {esito && <span className="cartiglio__esito">{esito}</span>}
+        <button type="button" className="azione" onClick={esporta} disabled={layers.length === 0}>
+          Esporta ZIP
+        </button>
+      </div>
     </header>
   );
 }

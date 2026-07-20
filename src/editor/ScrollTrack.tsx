@@ -13,6 +13,7 @@ export function ScrollTrack() {
   const layers = useEditor((s) => s.project.layers);
   const scrollPos = useEditor((s) => s.scrollPos);
   const setScrollPos = useEditor((s) => s.setScrollPos);
+  const scroller = useEditor((s) => s.scroller);
   const selectedId = useEditor((s) => s.selectedId);
 
   const piani = byDepth(layers);
@@ -63,14 +64,25 @@ export function ScrollTrack() {
           </svg>
         </div>
 
+        {/* Il cursore non tiene una posizione propria: muove lo scroll vero
+            dell'anteprima, e da lì anime.js fa il resto. Un secondo stato di
+            posizione accanto a quello del contenitore si disallineerebbe. */}
         <input
           className="cursore cursore--corsa"
           type="range"
           min={0}
           max={1}
-          step={0.005}
+          step={0.002}
           value={scrollPos}
-          onChange={(e) => setScrollPos(+e.target.value)}
+          onChange={(e) => {
+            const v = +e.target.value;
+            if (scroller) {
+              const max = scroller.scrollHeight - scroller.clientHeight;
+              scroller.scrollTop = v * max;
+            } else {
+              setScrollPos(v);
+            }
+          }}
           aria-label="Posizione di scroll"
         />
         <div className="corsa__scala">

@@ -101,9 +101,16 @@ type EditorStore = {
   selectedId: string | null;
   /** Posizione del cursore di scroll, 0..1. Stato di interfaccia, non di progetto. */
   scrollPos: number;
+  /**
+   * Il contenitore scrollabile dell'anteprima. Serve al cursore della fascia
+   * inferiore per pilotarne lo scroll. È un nodo DOM: sta qui perché è stato
+   * di interfaccia, e per questo non finisce mai nel file salvato.
+   */
+  scroller: HTMLElement | null;
 
   select: (id: string | null) => void;
   setScrollPos: (v: number) => void;
+  setScroller: (el: HTMLElement | null) => void;
 
   addText: () => void;
   removeLayer: (id: string) => void;
@@ -115,10 +122,12 @@ type EditorStore = {
 export const useEditor = create<EditorStore>((set) => ({
   project: starterProject(),
   selectedId: null,
-  scrollPos: 0.35,
+  scrollPos: 0,
+  scroller: null,
 
   select: (id) => set({ selectedId: id }),
   setScrollPos: (v) => set({ scrollPos: Math.min(1, Math.max(0, v)) }),
+  setScroller: (el) => set({ scroller: el }),
 
   addText: () =>
     set((s) => {
