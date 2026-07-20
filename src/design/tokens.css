@@ -1,0 +1,77 @@
+/**
+ * Tavola quotata — sistema di design dell'editor.
+ *
+ * Riferimento: una tavola di disegno tecnico su film da lucido.
+ * Il colore NON è decorativo: come nei layer CAD, ogni colore ha un mestiere.
+ * Se aggiungi un colore, deve avere un mestiere, altrimenti non entra qui.
+ */
+
+:root {
+  /* --- Il supporto: film da lucido, non nero puro --- */
+  --mylar: #15181b;
+  --mylar-raised: #1a1e22; /* pannelli sollevati dal piano */
+  --mylar-sunken: #101315; /* pozzetti: viewport, campi input */
+
+  /* --- Le linee --- */
+  --construction: #262d33; /* linee di costruzione, bordi, griglia */
+  --construction-strong: #333c44; /* stesso ruolo, un gradino più marcato */
+
+  /* --- I tre colori funzionali (i "layer" del CAD) --- */
+  --blueprint: #6bb3d6; /* geometria di costruzione: assi, piani, tracciati */
+  --working: #e8c063; /* il layer di lavoro corrente. Uno solo alla volta. */
+  --quota: #e2574c; /* SOLO quote e valori misurati. Mai per errori. */
+
+  /* --- L'inchiostro --- */
+  --annotation: #cbd5db; /* testo primario */
+  --annotation-dim: #7c8a93; /* etichette, unità, testo di servizio */
+  --annotation-faint: #4a555c; /* testo disattivato */
+
+  /* --- Stati --- */
+  /* Gli errori NON usano --quota: il rosso qui significa "misura", non "sbagliato".
+     Un errore parla con il colore del layer di lavoro, che è già il colore
+     dell'attenzione in questa tavola. */
+  --alert: var(--working);
+
+  /* --- Tipografia ---
+     Una sola famiglia variabile per display e corpo: cambia l'asse di larghezza,
+     non il carattere. Il condensed sta solo nel cartiglio e nelle etichette di
+     pannello, dove riproduce il lettering serigrafato di una tavola. */
+  --face-draw: 'Archivo Variable', system-ui, sans-serif;
+  --face-data: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --width-condensed: 68%;
+  --width-normal: 100%;
+
+  /* Scala tipografica. Stretta di proposito: una tavola tecnica non ha titoli
+     grandi, ha annotazioni di due o tre corpi. */
+  --size-block: 15px; /* cartiglio */
+  --size-label: 10px; /* etichette di pannello, maiuscole */
+  --size-body: 13px;
+  --size-data: 12px; /* numeri */
+  --size-micro: 10px; /* unità, pedici */
+
+  --track-label: 0.14em; /* spaziatura delle etichette maiuscole */
+
+  /* --- Griglia --- */
+  --rail-left: 216px;
+  --rail-right: 244px;
+  --band-bottom: 188px;
+  --title-block: 44px;
+
+  --gap: 1px; /* le zone sono separate da una linea, non da uno spazio */
+  --pad: 12px;
+}
+
+/* La tavola non ha un tema chiaro: è un piano di lavoro, e la chrome deve
+   arretrare dietro l'anteprima. Rispettiamo però chi riduce le animazioni. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+
+:root {
+  --motion-fast: 90ms;
+  --motion-slow: 220ms;
+}

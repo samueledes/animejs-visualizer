@@ -15,6 +15,10 @@ dist-ssr
 # Stato locale del plugin remember (log di sessione, non va su un repo pubblico)
 .remember
 
+# Screenshot e log di verifica presi con Playwright durante lo sviluppo
+.playwright-mcp
+tavola-*.png
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -1,0 +1,529 @@
+/**
+ * Stili della tavola.
+ *
+ * Regola di specificità: si stila per classe singola. Niente selettori di
+ * elemento per spaziature e niente annidamenti che si annullino a vicenda —
+ * ogni regola ha un solo posto dove vive.
+ */
+
+/* ---------- Griglia ---------- */
+
+.tavolo {
+  display: grid;
+  grid-template-columns: var(--rail-left) 1fr var(--rail-right);
+  grid-template-rows: var(--title-block) 1fr var(--band-bottom);
+  grid-template-areas:
+    'cartiglio cartiglio cartiglio'
+    'sx        tavola    dx'
+    'fascia    fascia    fascia';
+  gap: var(--gap);
+  /* Il fondo del contenitore trapela nei gap: è così che nascono le linee
+     di costruzione fra le zone, senza disegnare bordi. */
+  background: var(--construction);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.cartiglio {
+  grid-area: cartiglio;
+}
+.rail--sx {
+  grid-area: sx;
+}
+.tavola {
+  grid-area: tavola;
+}
+.rail--dx {
+  grid-area: dx;
+}
+.fascia {
+  grid-area: fascia;
+}
+
+/* ---------- Cartiglio ---------- */
+
+.cartiglio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--pad);
+  background: var(--mylar-raised);
+}
+
+.cartiglio__nome {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-block);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation);
+}
+
+.cartiglio__campi {
+  display: flex;
+  gap: 26px;
+  margin: 0;
+}
+
+.campo {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.campo__et {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-micro);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation-dim);
+}
+
+.campo__val {
+  margin: 0;
+  font-family: var(--face-data);
+  font-size: var(--size-data);
+  color: var(--annotation);
+}
+
+/* ---------- Guide laterali ---------- */
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: var(--pad);
+  background: var(--mylar-raised);
+  overflow-y: auto;
+}
+
+.rail__titolo {
+  margin: 0 0 2px;
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation-dim);
+}
+
+.rail__titolo--inline {
+  margin: 0;
+}
+
+/* ---------- Elenco piani ---------- */
+
+.piani {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.piano {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border: none;
+  border-left: 2px solid transparent;
+  background: var(--mylar-sunken);
+  color: var(--annotation);
+  font-family: var(--face-draw);
+  font-size: var(--size-body);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--motion-fast);
+}
+
+.piano:hover {
+  background: #171b1f;
+}
+
+.piano--attivo {
+  border-left-color: var(--working);
+  background: #1d2126;
+}
+
+/* Il ballon porta la quota z. Nel disegno tecnico è un rimando alla distinta:
+   un numero che significa qualcosa, non un contatore di righe. */
+.piano__ballon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--construction-strong);
+  border-radius: 50%;
+  font-family: var(--face-data);
+  font-size: var(--size-micro);
+  color: var(--blueprint);
+}
+
+.piano--attivo .piano__ballon {
+  border-color: var(--working);
+  color: var(--working);
+}
+
+.piano__nome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.piano__vel {
+  font-family: var(--face-data);
+  font-size: var(--size-data);
+  color: var(--annotation-dim);
+}
+
+.unita {
+  margin-left: 2px;
+  font-size: var(--size-micro);
+  color: var(--annotation-faint);
+}
+
+/* ---------- Anteprima ---------- */
+
+.tavola {
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--mylar-sunken);
+  overflow: hidden;
+}
+
+.tavola__foglio {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Il foglio è l'unica superficie con un'ombra: sta sopra il piano di lavoro. */
+  box-shadow: 0 0 0 1px var(--construction), 0 18px 44px rgb(0 0 0 / 0.45);
+}
+
+.tavola__vuota,
+.vuoto {
+  margin: 0;
+  font-family: var(--face-draw);
+  font-size: var(--size-body);
+  line-height: 1.5;
+  color: var(--annotation-dim);
+}
+
+.tavola__vuota {
+  display: grid;
+  place-items: center;
+  height: 100%;
+}
+
+.vuoto--stretto {
+  font-size: var(--size-micro);
+}
+
+.piano-vp {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-family: var(--face-draw);
+  will-change: transform;
+}
+
+.piano-vp--sel .piano-vp__corpo {
+  outline: 1px dashed var(--working);
+  outline-offset: 8px;
+}
+
+/* ---------- Fascia inferiore ---------- */
+
+.fascia {
+  display: grid;
+  grid-template-columns: 268px 1fr;
+  gap: var(--gap);
+  background: var(--construction);
+}
+
+.calibro,
+.corsa {
+  margin: 0;
+  padding: var(--pad);
+  background: var(--mylar-raised);
+}
+
+.calibro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calibro__et {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-label);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation-dim);
+}
+
+.calibro__svg {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+}
+
+.calibro__piano {
+  cursor: pointer;
+}
+
+.lastra {
+  fill: rgb(107 179 214 / 0.07);
+  stroke: var(--blueprint);
+  stroke-width: 1;
+  transition: fill var(--motion-fast);
+}
+
+.calibro__piano:hover .lastra {
+  fill: rgb(107 179 214 / 0.16);
+}
+
+.lastra--attiva {
+  fill: rgb(232 192 99 / 0.13);
+  stroke: var(--working);
+}
+
+.calibro__ballon {
+  font-family: var(--face-data);
+  font-size: 9px;
+  fill: var(--annotation-dim);
+}
+
+/* Le quote sono l'unico posto dove entra il rosso. */
+.quota-linea {
+  stroke: var(--quota);
+  stroke-width: 1;
+}
+
+.quota-testo {
+  font-family: var(--face-data);
+  font-size: 9px;
+  fill: var(--quota);
+}
+
+/* ---------- Corsa di scroll ---------- */
+
+.corsa {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.corsa__testa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.corsa__lettura {
+  font-family: var(--face-data);
+  font-size: var(--size-data);
+  color: var(--annotation);
+}
+
+/* L'SVG è posizionato in assoluto dentro questo riquadro, non dimensionato in
+   percentuale: height:100% su un SVG dentro un contenitore ad altezza indefinita
+   viene ignorato e il browser ricade sul rapporto d'aspetto del viewBox, che lo
+   fa diventare alto quanto è largo. */
+.corsa__grafico {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--mylar-sunken);
+  border: 1px solid var(--construction);
+}
+
+.corsa__svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.riferimento {
+  stroke: var(--construction-strong);
+  stroke-width: 0.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.tracciato {
+  stroke: var(--blueprint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.5;
+}
+
+.tracciato--attivo {
+  stroke: var(--working);
+  opacity: 1;
+}
+
+.cursore-linea {
+  stroke: var(--quota);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.corsa__scala {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--face-data);
+  font-size: var(--size-micro);
+  color: var(--annotation-faint);
+}
+
+/* ---------- Controlli ---------- */
+
+.quota-riga {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quota-riga__et {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-micro);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation-dim);
+}
+
+.quota-riga__val {
+  font-family: var(--face-data);
+  font-size: var(--size-data);
+  color: var(--annotation);
+}
+
+.cursore {
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cursore::-webkit-slider-runnable-track {
+  height: 1px;
+  background: var(--construction-strong);
+}
+
+.cursore::-webkit-slider-thumb {
+  appearance: none;
+  width: 3px;
+  height: 15px;
+  margin-top: -7px;
+  border-radius: 0;
+  background: var(--working);
+}
+
+.cursore::-moz-range-track {
+  height: 1px;
+  background: var(--construction-strong);
+}
+
+.cursore::-moz-range-thumb {
+  width: 3px;
+  height: 15px;
+  border: none;
+  border-radius: 0;
+  background: var(--working);
+}
+
+.cursore--corsa::-webkit-slider-thumb {
+  background: var(--quota);
+}
+
+.cursore--corsa::-moz-range-thumb {
+  background: var(--quota);
+}
+
+.campo-testo {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--construction-strong);
+  background: var(--mylar-sunken);
+  color: var(--annotation);
+  font-family: var(--face-draw);
+  font-size: var(--size-body);
+}
+
+.azione {
+  padding: 7px 10px;
+  border: 1px solid var(--construction-strong);
+  background: transparent;
+  color: var(--annotation);
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast),
+    color var(--motion-fast);
+}
+
+.azione:hover {
+  border-color: var(--working);
+  color: var(--working);
+}
+
+.azione--togli:hover {
+  border-color: var(--alert);
+  color: var(--alert);
+}
+
+.coppia {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.nota {
+  margin: 0;
+  font-family: var(--face-draw);
+  font-size: var(--size-micro);
+  line-height: 1.5;
+  color: var(--annotation-faint);
+}
+
+.nota--calibro {
+  color: var(--working);
+}
+
+/* ---------- Pavimento di qualità ---------- */
+
+.piano:focus-visible,
+.azione:focus-visible,
+.cursore:focus-visible,
+.campo-testo:focus-visible {
+  outline: 2px solid var(--working);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piano-vp {
+    transition: none;
+  }
+}
