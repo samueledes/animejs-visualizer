@@ -680,6 +680,238 @@
   color: var(--working);
 }
 
+/* ---------- Indice delle easing ---------- */
+
+.indice {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.indice__trigger {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--construction-strong);
+  background: var(--mylar-sunken);
+  color: var(--annotation);
+  cursor: pointer;
+  text-align: left;
+}
+
+.indice__trigger:hover {
+  border-color: var(--working);
+}
+
+.indice__et {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: var(--size-micro);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation-dim);
+}
+
+.indice__valore {
+  font-family: var(--face-data);
+  font-size: var(--size-data);
+}
+
+.indice__sommario {
+  margin: 0;
+  font-family: var(--face-draw);
+  font-size: var(--size-micro);
+  line-height: 1.45;
+  color: var(--annotation-faint);
+}
+
+/* Il pannello è ancorato al trigger e non a tutto schermo: resti nel posto
+   in cui stavi lavorando. Non blocca lo scroll del documento, perché qui il
+   documento è la corsa che pilota l'anteprima. */
+.pannello {
+  position: fixed;
+  z-index: 60;
+  max-height: 62vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--working);
+  background: var(--mylar-raised);
+  box-shadow: 0 18px 44px rgb(0 0 0 / 0.55);
+}
+
+.pannello__campo {
+  padding: 9px 10px;
+  border: none;
+  border-bottom: 1px solid var(--construction);
+  background: var(--mylar-sunken);
+  color: var(--annotation);
+  font-family: var(--face-draw);
+  font-size: var(--size-body);
+}
+
+.pannello__campo::placeholder {
+  color: var(--annotation-faint);
+}
+
+.pannello__conteggio {
+  margin: 0;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--construction);
+  font-family: var(--face-data);
+  font-size: var(--size-micro);
+  color: var(--annotation-dim);
+}
+
+.pannello__lista {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  /* Con lo scroll morbido e la freccia tenuta premuta le animazioni si
+     accodano e la lista sembra incollata. */
+  scroll-behavior: auto;
+}
+
+.pannello__vuoto {
+  margin: 0;
+  padding: 14px 10px;
+  font-family: var(--face-draw);
+  font-size: var(--size-micro);
+  line-height: 1.5;
+  color: var(--annotation-dim);
+}
+
+.voce {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 9px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+}
+
+/* La voce attiva non si distingue solo per colore: c'è anche la barra a
+   sinistra, che sopravvive al daltonismo e al contrasto forzato. */
+.voce--attiva {
+  border-left-color: var(--working);
+  background: #1d2126;
+}
+
+.voce--corrente .voce__nome {
+  color: var(--working);
+}
+
+.voce__testi {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.voce__riga {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.voce__nome {
+  font-family: var(--face-data);
+  font-size: var(--size-data);
+  color: var(--annotation);
+}
+
+.voce__famiglia {
+  font-family: var(--face-draw);
+  font-stretch: var(--width-condensed);
+  font-size: 9px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--annotation-faint);
+}
+
+/* Il badge segnala le curve che sforano o arretrano: è la cosa che sorprende
+   chi le usa, quindi si dice prima, non dopo. */
+.voce__badge {
+  padding: 1px 5px;
+  border: 1px solid var(--quota);
+  font-family: var(--face-draw);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: var(--track-label);
+  color: var(--quota);
+}
+
+/* La descrizione va a capo e non si tronca: è metà del motivo per cui il
+   dropdown è stato sostituito. */
+.voce__cosa,
+.voce__quando {
+  font-family: var(--face-draw);
+  font-size: var(--size-micro);
+  line-height: 1.45;
+  color: var(--annotation-dim);
+}
+
+.voce__quando {
+  color: var(--annotation-faint);
+  font-style: italic;
+}
+
+.voce mark {
+  background: transparent;
+  color: var(--working);
+  font-weight: 600;
+}
+
+.curva {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+
+.curva__riferimento {
+  fill: none;
+  stroke: var(--construction-strong);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.curva__tracciato {
+  fill: none;
+  stroke: var(--blueprint);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.curva--attiva .curva__tracciato {
+  stroke: var(--working);
+}
+
+.solo-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (forced-colors: active) {
+  .voce--attiva {
+    background: Highlight;
+    color: HighlightText;
+    border: 1px solid transparent;
+  }
+}
+
 /* ---------- Pavimento di qualità ---------- */
 
 .piano:focus-visible,

@@ -1,4 +1,5 @@
-import { EASINGS, PROPRIETA_ANIMABILI, type PropAnimabile } from '../anim/catalogo';
+import { PROPRIETA_ANIMABILI, type PropAnimabile } from '../anim/catalogo';
+import { IndiceEase } from './IndiceEase';
 import { useEditor } from '../store/project';
 import type { ScrollSync } from '../schema/types';
 
@@ -388,29 +389,7 @@ function SceltaEase({
   valore: string;
   onChange: (v: string) => void;
 }) {
-  return (
-    <>
-      <label className="quota-riga__et" htmlFor={id}>
-        Easing
-      </label>
-      <select
-        id={id}
-        className="campo-testo"
-        value={valore}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {EASINGS.map((g) => (
-          <optgroup key={g.gruppo} label={g.gruppo}>
-            {g.nomi.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-    </>
-  );
+  return <IndiceEase id={id} valore={valore} onChange={onChange} />;
 }
 
 function Quota({ etichetta, valore, unita }: { etichetta: string; valore: string; unita?: string }) {

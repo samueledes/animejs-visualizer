@@ -112,8 +112,17 @@ type EditorStore = {
    * di interfaccia, e per questo non finisce mai nel file salvato.
    */
   scroller: HTMLElement | null;
+  /**
+   * Quale indice di ricerca è aperto, per id di istanza.
+   *
+   * Uno solo per volta, e tenuto qui e non nel componente: il pannello è
+   * montato fino a tre volte insieme (easing dell'animazione, della rotazione,
+   * dell'aggancio) e con un booleano per istanza un Esc li chiuderebbe tutti.
+   */
+  indiceAperto: string | null;
 
   select: (id: string | null) => void;
+  apriIndice: (id: string | null) => void;
   setScrollPos: (v: number) => void;
   setScroller: (el: HTMLElement | null) => void;
 
@@ -155,8 +164,10 @@ export const useEditor = create<EditorStore>((set) => ({
   selectedId: null,
   scrollPos: 0,
   scroller: null,
+  indiceAperto: null,
 
   select: (id) => set({ selectedId: id }),
+  apriIndice: (id) => set({ indiceAperto: id }),
   setScrollPos: (v) => set({ scrollPos: Math.min(1, Math.max(0, v)) }),
   setScroller: (el) => set({ scroller: el }),
 
