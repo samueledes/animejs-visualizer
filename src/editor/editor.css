@@ -514,6 +514,10 @@
   gap: 6px;
 }
 
+.nascosto {
+  display: none;
+}
+
 .separatore {
   width: 100%;
   height: 0;

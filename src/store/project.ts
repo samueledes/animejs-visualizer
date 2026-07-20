@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import {
   createEmptyProject,
+  type ImageLayer,
   type Layer,
   type ProjectState,
   type ScrollAnim,
@@ -116,6 +117,10 @@ type EditorStore = {
   setScroller: (el: HTMLElement | null) => void;
 
   addText: () => void;
+  /** Crea un piano immagine che cita un asset già presente nel deposito. */
+  addImage: (assetId: string, nome: string) => void;
+  /** Sostituisce l'intero progetto. Gli asset li rimpiazza il deposito. */
+  caricaProgetto: (progetto: ProjectState) => void;
   removeLayer: (id: string) => void;
   updateLayer: (id: string, patch: Partial<Layer>) => void;
   /** Sposta un layer di un gradino in profondità. Cambia z, non l'ordine in lista. */
@@ -148,6 +153,26 @@ export const useEditor = create<EditorStore>((set) => ({
   select: (id) => set({ selectedId: id }),
   setScrollPos: (v) => set({ scrollPos: Math.min(1, Math.max(0, v)) }),
   setScroller: (el) => set({ scroller: el }),
+
+  addImage: (assetId, nome) =>
+    set((s) => {
+      const z = s.project.layers.reduce((max, l) => Math.max(max, l.z), -1) + 1;
+      const layer: ImageLayer = {
+        id: nextId('img'),
+        name: nome,
+        type: 'image',
+        z,
+        parallax: { speedY: 0.4 },
+        src: assetId,
+        transform: { x: 0, y: 0 },
+      };
+      return {
+        project: { ...s.project, layers: [...s.project.layers, layer] },
+        selectedId: layer.id,
+      };
+    }),
+
+  caricaProgetto: (progetto) => set({ project: progetto, selectedId: null, scrollPos: 0 }),
 
   addText: () =>
     set((s) => {

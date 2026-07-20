@@ -29,19 +29,36 @@ function nomeFile(state: ProjectState): string {
   return 'parallax';
 }
 
-function pianiMarkup(state: ProjectState): string {
+/**
+ * Traduce l'id di un asset nell'URL con cui raggiungerlo.
+ *
+ * Cambia fra i due consumatori ed è l'unica cosa che cambia: nello ZIP è un
+ * percorso relativo a un file scritto accanto, nell'anteprima è un object URL
+ * del blob in memoria. Il resto del documento generato è identico.
+ */
+export type RisolviAsset = (id: string) => string | null;
+
+function pianiMarkup(state: ProjectState, risolvi: RisolviAsset): string {
   return tracce(state)
     .map(({ layer, domId }) => {
-      const corpo = layer.type === 'text' ? esc((layer as TextLayer).content) : '';
+      let corpo = '';
+      if (layer.type === 'text') {
+        corpo = `<span class="piano__corpo">${esc((layer as TextLayer).content)}</span>`;
+      } else if (layer.type === 'image') {
+        const url = risolvi(layer.src);
+        corpo = url
+          ? `<img class="piano__corpo" src="${esc(url)}" alt="${esc(layer.name)}" />`
+          : `<span class="piano__corpo piano__mancante">Immagine mancante</span>`;
+      }
       return `      <div class="piano" id="${domId}" data-nome="${esc(layer.name)}">\n` +
-        `        <span class="piano__corpo">${corpo}</span>\n` +
+        `        ${corpo}\n` +
         `      </div>`;
     })
     .join('\n');
 }
 
-export function stateToHtml(state: ProjectState): string {
-  const piani = pianiMarkup(state);
+export function stateToHtml(state: ProjectState, risolvi: RisolviAsset): string {
+  const piani = pianiMarkup(state, risolvi);
 
   return `<!doctype html>
 <html lang="it">
@@ -117,6 +134,14 @@ body {
 
 .piano__corpo {
   position: relative;
+  max-width: 70%;
+  height: auto;
+}
+
+.piano__mancante {
+  font-family: ui-monospace, monospace;
+  font-size: 14px;
+  color: #e2574c;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -217,7 +242,11 @@ ${blocchi}
  * divergere: sono lo stesso documento, con la sola differenza di dove sta il
  * bundle di anime.js.
  */
-export function stateToDocumentoUnico(state: ProjectState, urlAnime: string): string {
+export function stateToDocumentoUnico(
+  state: ProjectState,
+  urlAnime: string,
+  risolvi: RisolviAsset,
+): string {
   const js = stateToJs(state).replace('./lib/anime.esm.min.js', urlAnime);
   return `<!doctype html>
 <html lang="it">
@@ -230,7 +259,7 @@ ${stateToCss(state)}
   <body>
     <div class="corsa">
       <div class="scena">
-${pianiMarkup(state)}
+${pianiMarkup(state, risolvi)}
       </div>
     </div>
     <script type="module">
@@ -241,9 +270,9 @@ ${js}
 }
 
 /** Tutte le sorgenti generate, per chi vuole ispezionarle senza aprire lo ZIP. */
-export function stateToSources(state: ProjectState) {
+export function stateToSources(state: ProjectState, risolvi: RisolviAsset) {
   return {
-    'index.html': stateToHtml(state),
+    'index.html': stateToHtml(state, risolvi),
     'style.css': stateToCss(state),
     'animation.js': stateToJs(state),
   } satisfies Record<string, string>;
@@ -251,7 +280,7 @@ export function stateToSources(state: ProjectState) {
 
 export type Sorgenti = ReturnType<typeof stateToSources>;
 
-/** Segnaposto: i layer non ancora supportati dall'export non devono passare in silenzio. */
+/** I layer che l'export non sa ancora emettere. Non devono passare in silenzio. */
 export function layerNonSupportati(state: ProjectState): Layer[] {
-  return state.layers.filter((l) => l.type !== 'text');
+  return state.layers.filter((l) => l.type !== 'text' && l.type !== 'image');
 }

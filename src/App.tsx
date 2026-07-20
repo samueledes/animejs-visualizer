@@ -6,6 +6,7 @@ import { PropertiesPanel } from './editor/PropertiesPanel';
 import { ScrollTrack } from './editor/ScrollTrack';
 import { stateToSources } from './exporter/generate';
 import { useEditor } from './store/project';
+import { useAssets } from './assets-store/store';
 import './editor/editor.css';
 
 export default function App() {
@@ -15,7 +16,10 @@ export default function App() {
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     Object.assign(window, {
-      __sorgenti: () => stateToSources(useEditor.getState().project),
+      __sorgenti: () => {
+        const assets = useAssets.getState().assets;
+        return stateToSources(useEditor.getState().project, (id) => assets[id]?.url ?? null);
+      },
     });
   }, []);
 

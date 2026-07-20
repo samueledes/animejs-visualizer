@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 // URL di pari origine sì. Vite lo emette come asset sia in dev sia in build.
 import urlAnimeAsset from '../../node_modules/animejs/dist/bundles/anime.esm.min.js?url';
 import { stateToDocumentoUnico } from '../exporter/generate';
+import { useAssets } from '../assets-store/store';
 import { useEditor } from '../store/project';
 import type { ProjectState } from '../schema/types';
 
@@ -29,7 +30,13 @@ export function PreviewFrame({ state }: { state: ProjectState }) {
   // documento srcdoc, che non ha una base utile.
   const urlAnime = useMemo(() => new URL(urlAnimeAsset, location.origin).href, []);
 
-  const documento = useMemo(() => stateToDocumentoUnico(state, urlAnime), [state, urlAnime]);
+  // Nell'anteprima un asset si raggiunge col suo object URL; nello ZIP con un
+  // percorso relativo. È l'unica differenza fra i due documenti generati.
+  const assets = useAssets((s) => s.assets);
+  const documento = useMemo(
+    () => stateToDocumentoUnico(state, urlAnime, (id) => assets[id]?.url ?? null),
+    [state, urlAnime, assets],
+  );
 
   useEffect(() => {
     const el = frame.current;
